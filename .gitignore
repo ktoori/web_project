@@ -1,0 +1,36 @@
+# Node.js
+node_modules/
+dist/
+.env
+.env.local
+.env.development
+.env.production
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Docker
+docker-data/
+**/docker-compose.override.yml
+
+# pgAdmin export files or temp SQL
+*.sql
+*.dump
+
+# Mac/Linux artifacts
+*.swp
