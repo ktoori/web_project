@@ -29,7 +29,6 @@ docker-data/
 **/docker-compose.override.yml
 
 # pgAdmin export files or temp SQL
-*.sql
 *.dump
 
 # Mac/Linux artifacts
