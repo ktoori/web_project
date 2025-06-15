@@ -1,12 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import { fetchComments, addComment } from "../api/api";
 import { Box, Typography, TextField, Button, Paper, List, ListItem, Link } from "@mui/material";
 
-export default function MaterialComments({ materialId, role }) {
-  const [comments, setComments] = useState([]);
-  const [text, setText] = useState("");
-  const [file, setFile] = useState(null);
-  const [loading, setLoading] = useState(false);
+// Тип для одного комментария
+interface Comment {
+  id: number;
+  user_email: string;
+  text: string;
+  file_path?: string;
+  created_at: string;
+}
+
+interface MaterialCommentsProps {
+  materialId: number;
+  role: string;
+}
+
+const MaterialComments: React.FC<MaterialCommentsProps> = ({ materialId, role }) => {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [text, setText] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
   // Берём email из localStorage
   const userEmail = localStorage.getItem("email");
 
@@ -22,13 +37,16 @@ export default function MaterialComments({ materialId, role }) {
     // eslint-disable-next-line
   }, [materialId]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Передаём email в addComment!
     await addComment(materialId, text, file, userEmail || "anon");
     setText("");
     setFile(null);
     loadComments();
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null);
   };
 
   return (
@@ -47,7 +65,7 @@ export default function MaterialComments({ materialId, role }) {
           <input
             type="file"
             accept=".txt,.doc,.docx"
-            onChange={e => setFile(e.target.files[0])}
+            onChange={handleFileChange}
             style={{ margin: "8px 0" }}
           />
           <Button variant="contained" type="submit" disabled={loading}>Отправить</Button>
@@ -76,4 +94,6 @@ export default function MaterialComments({ materialId, role }) {
       </List>
     </Paper>
   );
-}
+};
+
+export default MaterialComments;

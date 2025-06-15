@@ -1,38 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, ChangeEvent, FormEvent } from "react";
 import { TextField, Button, Typography, Paper } from "@mui/material";
 import { createMaterial } from "../api/api";
 
-export default function AddMaterialForm({ onSuccess }) {
-  const [values, setValues] = useState({
-    subject: "",
-    lecturer: "",
-    title: "",
-    content: "",
-    homework: "",
-    date: "",
-    homework_due: "",
-  });
-  const [error, setError] = useState("");
+interface AddMaterialFormProps {
+  onSuccess?: () => void;
+}
 
-  const handleChange = (e) => {
+interface MaterialFormValues {
+  subject: string;
+  lecturer: string;
+  title: string;
+  content: string;
+  homework: string;
+  date: string;
+  homework_due: string;
+}
+
+const initialValues: MaterialFormValues = {
+  subject: "",
+  lecturer: "",
+  title: "",
+  content: "",
+  homework: "",
+  date: "",
+  homework_due: "",
+};
+
+const AddMaterialForm: React.FC<AddMaterialFormProps> = ({ onSuccess }) => {
+  const [values, setValues] = useState<MaterialFormValues>(initialValues);
+  const [error, setError] = useState<string>("");
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     try {
       const token = localStorage.getItem("token");
       await createMaterial(values, token);
-      setValues({
-        subject: "",
-        lecturer: "",
-        title: "",
-        content: "",
-        homework: "",
-        date: "",
-        homework_due: "",
-      });
+      setValues(initialValues);
       onSuccess && onSuccess();
     } catch {
       setError("Ошибка при добавлении материала");
@@ -55,4 +63,6 @@ export default function AddMaterialForm({ onSuccess }) {
       </form>
     </Paper>
   );
-}
+};
+
+export default AddMaterialForm;

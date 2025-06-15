@@ -1,14 +1,19 @@
-// Header.jsx
 import React from "react";
 import { AppBar, Toolbar, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-export default function Header({ setIsAuth }) {
+interface HeaderProps {
+  setIsAuth?: (val: boolean) => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ setIsAuth }) => {
   const navigate = useNavigate();
   const isAuth = !!localStorage.getItem("token");
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("email");
     setIsAuth && setIsAuth(false);
     navigate("/login");
   };
@@ -24,9 +29,14 @@ export default function Header({ setIsAuth }) {
           Образовательный портал
         </Typography>
         {isAuth ? (
-          <Button color="inherit" onClick={handleLogout}>
-            Выйти
-          </Button>
+          <>
+            <Button color="inherit" onClick={() => navigate("/profile")}>
+              Профиль
+            </Button>
+            <Button color="inherit" onClick={handleLogout}>
+              Выйти
+            </Button>
+          </>
         ) : (
           <>
             <Button color="inherit" onClick={() => navigate("/login")}>
@@ -40,4 +50,6 @@ export default function Header({ setIsAuth }) {
       </Toolbar>
     </AppBar>
   );
-}
+};
+
+export default Header;

@@ -1,21 +1,54 @@
-import React, { useState } from "react";
-import { TextField, Button, Typography, Paper, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import {
+  TextField,
+  Button,
+  Typography,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
+} from "@mui/material";
 import { updateMaterial } from "../api/api";
 
-export default function EditMaterialForm({ open, onClose, material, onSuccess }) {
-  const [values, setValues] = useState({ ...material });
-  const [error, setError] = useState("");
+// Тип для одной учебной записи
+export interface Material {
+  id: number;
+  subject: string;
+  lecturer: string;
+  title: string;
+  content: string;
+  homework: string;
+  date: string;
+  homework_due: string;
+}
+
+interface EditMaterialFormProps {
+  open: boolean;
+  onClose: () => void;
+  material: Material;
+  onSuccess?: () => void;
+}
+
+const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
+  open,
+  onClose,
+  material,
+  onSuccess
+}) => {
+  const [values, setValues] = useState<Material>({ ...material });
+  const [error, setError] = useState<string>("");
 
   // Сброс формы при открытии нового материала для редактирования
-  React.useEffect(() => {
+  useEffect(() => {
     setValues({ ...material });
   }, [material]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     try {
@@ -49,4 +82,6 @@ export default function EditMaterialForm({ open, onClose, material, onSuccess })
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default EditMaterialForm;

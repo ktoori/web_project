@@ -1,16 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/api";
 import { Button, TextField, Box, Typography, Paper } from "@mui/material";
 
+interface LoginPageProps {
+  setIsAuth: (auth: boolean) => void;
+}
 
-export default function LoginPage({ setIsAuth }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+const LoginPage: React.FC<LoginPageProps> = ({ setIsAuth }) => {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     try {
@@ -54,4 +57,6 @@ export default function LoginPage({ setIsAuth }) {
       </Paper>
     </Box>
   );
-}
+};
+
+export default LoginPage;
