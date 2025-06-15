@@ -15,3 +15,11 @@ CREATE TABLE IF NOT EXISTS materials (
     date DATE,
     homework_due DATE
 );
+CREATE TABLE IF NOT EXISTS comments (
+    id SERIAL PRIMARY KEY,
+    material_id INTEGER REFERENCES materials(id) ON DELETE CASCADE,
+    user_email VARCHAR(255) NOT NULL,
+    text TEXT,
+    file_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
