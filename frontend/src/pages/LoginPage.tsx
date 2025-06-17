@@ -1,21 +1,19 @@
 import React, { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/api";
-import { 
-  Button, 
-  TextField, 
-  Box, 
-  Typography, 
-  Paper, 
+import {
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Paper,
   InputAdornment,
   IconButton,
   CircularProgress
 } from "@mui/material";
-import { 
-  Email as EmailIcon, 
-  Lock as LockIcon, 
-  Visibility, 
-  VisibilityOff 
+import {
+  Email as EmailIcon,
+  Lock as LockIcon,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import { styled } from "@mui/material/styles";
@@ -37,15 +35,31 @@ const LoginPage: React.FC<{ setIsAuth: (auth: boolean) => void }> = ({ setIsAuth
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [isEmailError, setIsEmailError] = useState(false);
+  const [isPasswordError, setIsPasswordError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setIsEmailError(false);
+    setIsPasswordError(false);
+
+    // Проверяем, что поля заполнены
+    let hasError = false;
+    if (!email.trim()) {
+      setIsEmailError(true);
+      hasError = true;
+    }
+    if (!password.trim()) {
+      setIsPasswordError(true);
+      hasError = true;
+    }
+    if (hasError) return;
+
     setIsLoading(true);
-    
+
     try {
       const data = await login(email, password);
       localStorage.setItem("token", data.token);
@@ -111,10 +125,12 @@ const LoginPage: React.FC<{ setIsAuth: (auth: boolean) => void }> = ({ setIsAuth
             <TextField
               label="Email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (isEmailError) setIsEmailError(false);
+              }}
               fullWidth
               margin="normal"
-              required
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -127,10 +143,10 @@ const LoginPage: React.FC<{ setIsAuth: (auth: boolean) => void }> = ({ setIsAuth
                 '& .MuiOutlinedInput-root': {
                   borderRadius: "12px",
                   '& fieldset': {
-                    borderColor: "rgba(136, 162, 255, 0.5)",
+                    borderColor: isEmailError ? "#E53E3E" : "rgba(136, 162, 255, 0.5)",
                   },
                   '&:hover fieldset': {
-                    borderColor: "#88A2FF",
+                    borderColor: isEmailError ? "#E53E3E" : "#88A2FF",
                   },
                 },
               }}
@@ -138,26 +154,18 @@ const LoginPage: React.FC<{ setIsAuth: (auth: boolean) => void }> = ({ setIsAuth
 
             <TextField
               label="Пароль"
-              type={showPassword ? "text" : "password"}
+              type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (isPasswordError) setIsPasswordError(false);
+              }}
               fullWidth
               margin="normal"
-              required
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
                     <LockIcon color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
                   </InputAdornment>
                 ),
               }}
@@ -166,10 +174,10 @@ const LoginPage: React.FC<{ setIsAuth: (auth: boolean) => void }> = ({ setIsAuth
                 '& .MuiOutlinedInput-root': {
                   borderRadius: "12px",
                   '& fieldset': {
-                    borderColor: "rgba(136, 162, 255, 0.5)",
+                    borderColor: isPasswordError ? "#E53E3E" : "rgba(136, 162, 255, 0.5)",
                   },
                   '&:hover fieldset': {
-                    borderColor: "#88A2FF",
+                    borderColor: isPasswordError ? "#E53E3E" : "#88A2FF",
                   },
                 },
               }}
@@ -225,6 +233,7 @@ const LoginPage: React.FC<{ setIsAuth: (auth: boolean) => void }> = ({ setIsAuth
                 fontWeight: 600,
                 '&:hover': {
                   background: "rgba(136, 162, 255, 0.1)",
+                  
                 },
               }}
             >

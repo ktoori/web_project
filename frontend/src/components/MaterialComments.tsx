@@ -322,7 +322,7 @@ const MaterialComments: React.FC<MaterialCommentsProps> = ({ materialId, role })
             ))}
           </AnimatePresence>
 
-          {comments.length === 0 && (
+          {comments.length === 0 && role !== "admin" &&(
             <Box
               sx={{
                 textAlign: "center",

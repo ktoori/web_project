@@ -9,7 +9,7 @@ import {
   DialogActions,
   IconButton,
   CircularProgress,
-  Box // Добавлен импорт Box
+  Box
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { updateMaterial } from "../api/api";
@@ -33,6 +33,8 @@ interface EditMaterialFormProps {
   onSuccess?: () => void;
 }
 
+// ...импорты и типы как раньше
+
 const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
   open,
   onClose,
@@ -41,14 +43,30 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
 }) => {
   const [values, setValues] = useState<Material>({ ...material });
   const [error, setError] = useState<string>("");
+  const [dateError, setDateError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
       setValues({ ...material });
       setError("");
+      setDateError("");
     }
   }, [material, open]);
+
+  useEffect(() => {
+    if (values.homework_due && values.date) {
+      const date = new Date(values.date);
+      const due = new Date(values.homework_due);
+      if (due < date) {
+        setDateError("Срок сдачи ДЗ не может быть раньше даты лекции");
+      } else {
+        setDateError("");
+      }
+    } else {
+      setDateError("");
+    }
+  }, [values.homework_due, values.date]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -58,7 +76,17 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
-    
+
+    if (values.homework_due && values.date) {
+      const date = new Date(values.date);
+      const due = new Date(values.homework_due);
+      if (due < date) {
+        setDateError("Срок сдачи ДЗ не может быть раньше даты лекции");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       const token = localStorage.getItem("token");
       await updateMaterial(material.id, values, token);
@@ -71,12 +99,11 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
     }
   };
 
-  // Функция для безопасного применения slice
   const safeSlice = (value: string | number | undefined): string => {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       return value.slice(0, 10);
     }
-    return '';
+    return "";
   };
 
   return (
@@ -85,8 +112,10 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      scroll="paper"
       PaperProps={{
         sx: {
+          mt:7,
           borderRadius: "24px",
           background: "#FFF9F5",
           boxShadow: "0 12px 48px rgba(136, 162, 255, 0.15)",
@@ -111,22 +140,24 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <DialogTitle sx={{
-          px: 4,
-          pt: 3,
-          pb: 2,
-          position: "relative",
-          "&::after": {
-            content: '""',
-            position: "absolute",
-            bottom: 0,
-            left: 40,
-            width: "48px",
-            height: "3px",
-            background: "linear-gradient(90deg, #88A2FF 0%, #FFB2F7 100%)",
-            borderRadius: "3px",
-          }
-        }}>
+        <DialogTitle
+          sx={{
+            px: 4,
+            pt: 3,
+            pb: 1,
+            position: "relative",
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              bottom: 0,
+              left: 40,
+              width: "48px",
+              height: "3px",
+              background: "linear-gradient(90deg, #88A2FF 0%, #FFB2F7 100%)",
+              borderRadius: "3px",
+            }
+          }}
+        >
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography
               variant="h5"
@@ -152,9 +183,17 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
           </Box>
         </DialogTitle>
 
-        <DialogContent sx={{ px: 4, pt: 3, pb: 0 }}>
+        <DialogContent
+          sx={{
+            px: 4,
+            pt: 3,
+            pb: 0,
+            maxHeight: { xs: "70vh", sm: "75vh", md: "75vh" },
+            overflowY: "auto"
+          }}
+        >
           <form onSubmit={handleSubmit}>
-            <Box display="flex" flexDirection="column" gap={2.5} mb={3}>
+            <Box display="flex" flexDirection="column" gap={2.5} mb={3} mt={3}>
               {[
                 { name: "subject", label: "Предмет", required: true },
                 { name: "lecturer", label: "ФИО преподавателя", required: true },
@@ -168,7 +207,11 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
                   key={field.name}
                   name={field.name}
                   label={field.label}
-                  value={field.type === "date" ? safeSlice(values[field.name as keyof Material]) : values[field.name as keyof Material] || ""}
+                  value={
+                    field.type === "date"
+                      ? safeSlice(values[field.name as keyof Material])
+                      : values[field.name as keyof Material] || ""
+                  }
                   onChange={handleChange}
                   type={field.type as any}
                   required={field.required}
@@ -197,6 +240,11 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
                 />
               ))}
 
+              {dateError && (
+                <Typography color="error" fontSize={14} sx={{ mt: -2, mb: 1, ml: 1 }}>
+                  {dateError}
+                </Typography>
+              )}
               {error && (
                 <Typography color="error" fontSize={15} fontFamily="Montserrat, sans-serif">
                   {error}
@@ -225,12 +273,12 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
               >
                 Отмена
               </Button>
-              
+
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !!dateError}
                   sx={{
                     borderRadius: "12px",
                     px: 3,

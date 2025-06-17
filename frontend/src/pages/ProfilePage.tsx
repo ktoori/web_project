@@ -14,7 +14,6 @@ import {
   Chip,
   CircularProgress,
   IconButton,
-  Badge,
   InputAdornment
 } from "@mui/material";
 import {
@@ -26,86 +25,67 @@ import {
   School as SchoolIcon
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
-import { styled } from "@mui/material/styles";
 
 const PHOTO_KEY = "profile_photo";
 const NAME_KEY = "profile_name";
 const SURNAME_KEY = "profile_surname";
 
-const StyledBadge = styled(Badge)(({ theme }) => ({
-  '& .MuiBadge-badge': {
-    backgroundColor: '#44b700',
-    color: '#44b700',
-    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-    '&::after': {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      borderRadius: '50%',
-      animation: 'ripple 1.2s infinite ease-in-out',
-      border: '1px solid currentColor',
-      content: '""',
-    },
-  },
-  '@keyframes ripple': {
-    '0%': {
-      transform: 'scale(.8)',
-      opacity: 1,
-    },
-    '100%': {
-      transform: 'scale(2.4)',
-      opacity: 0,
-    },
-  },
-}));
-
 const ProfilePage: React.FC = () => {
   const role = localStorage.getItem("role") || "";
   const email = localStorage.getItem("email") || "";
-  const [photo, setPhoto] = useState<string | null>(localStorage.getItem(PHOTO_KEY));
-  const [name, setName] = useState<string>(localStorage.getItem(NAME_KEY) || "");
-  const [surname, setSurname] = useState<string>(localStorage.getItem(SURNAME_KEY) || "");
+  const [photo, setPhoto] = useState<string | null>(localStorage.getItem(`profile_photo_${email}`));
+  const [name, setName] = useState<string>(localStorage.getItem(`profile_name_${email}`) || "");
+  const [surname, setSurname] = useState<string>(localStorage.getItem(`profile_surname_${email}`) || "");
   const [saved, setSaved] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [completed, setCompleted] = useState<number[]>([]);
 
-  useEffect(() => {
-    if (role === "user") {
-      const raw = localStorage.getItem("completed_homeworks");
-      setCompleted(raw ? JSON.parse(raw) : []);
+ useEffect(() => {
+  if (role === "user") {
+    const data = localStorage.getItem(`hw_done_${email}`);
+    if (data) {
+      // doneObj = { "1": true, "2": false, ... }
+      const doneObj = JSON.parse(data);
+      const completedIds = Object.entries(doneObj)
+        .filter(([_, status]) => status)
+        .map(([id]) => Number(id));
+      setCompleted(completedIds);
+    } else {
+      setCompleted([]);
     }
-  }, [role]);
+  }
+}, [role, email]);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsLoading(true);
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        setPhoto(result);
-        localStorage.setItem(PHOTO_KEY, result);
-        setIsLoading(false);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
+
+const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (file) {
     setIsLoading(true);
-    setTimeout(() => {
-      localStorage.setItem(NAME_KEY, name);
-      localStorage.setItem(SURNAME_KEY, surname);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setPhoto(result);
+      localStorage.setItem(`profile_photo_${email}`, result);
       setIsLoading(false);
-      setSaved(true);
-      setIsEditing(false);
-      setTimeout(() => setSaved(false), 2000);
-    }, 800);
-  };
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const handleSave = (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setTimeout(() => {
+    localStorage.setItem(`profile_name_${email}`, name);
+    localStorage.setItem(`profile_surname_${email}`, surname);
+    setIsLoading(false);
+    setSaved(true);
+    setIsEditing(false);
+    setTimeout(() => setSaved(false), 2000);
+  }, 800);
+};
 
   return (
     <Box
@@ -178,26 +158,20 @@ const ProfilePage: React.FC = () => {
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-          <StyledBadge
-            overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            variant="dot"
+          {/* Без Badge! */}
+          <Avatar
+            src={photo || undefined}
+            sx={{
+              width: 100,
+              height: 100,
+              mr: 3,
+              boxShadow: "0 4px 16px rgba(136, 162, 255, 0.3)",
+              border: "2px solid #88A2FF",
+            }}
           >
-            <Avatar
-              src={photo || undefined}
-              sx={{
-                width: 100,
-                height: 100,
-                mr: 3,
-                boxShadow: "0 4px 16px rgba(136, 162, 255, 0.3)",
-                border: "2px solid #88A2FF",
-              }}
-            >
-              {!photo && <PersonIcon sx={{ fontSize: 50 }} />}
-            </Avatar>
-          </StyledBadge>
+            {!photo && <PersonIcon sx={{ fontSize: 50 }} />}
+          </Avatar>
 
-          {/* Motion wrapper for animation */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="outlined"
@@ -269,37 +243,39 @@ const ProfilePage: React.FC = () => {
             </Box>
 
             <Box sx={{ display: "flex", gap: 2 }}>
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} style={{ width: '100%' }}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={isLoading}
-                  startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : null}
-                  sx={{
-                    flex: 1,
-                    borderRadius: "12px",
-                    bgcolor: "#88A2FF",
-                    color: "white",
-                    fontWeight: 600,
-                    py: 1.5,
-                    "&:hover": {
-                      bgcolor: "#7691E8",
-                    },
-                  }}
-                >
-                  Сохранить
-                </Button>
-              </motion.div>
+              {/* Кнопка Сохранить — без перемещения при наведении */}
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isLoading}
+                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : null}
+                sx={{
+                  flex: 1,
+                  borderRadius: "12px",
+                  bgcolor: "#88A2FF",
+                  color: "white",
+                  fontWeight: 600,
+                  py: 1.5,
+                  transition: "background 0.2s", // Только цвет
+                  "&:hover": {
+                    bgcolor: "#7691E8",
+                  },
+                }}
+              >
+                Сохранить
+              </Button>
+              {/* Кнопка Отмена — широкая */}
               <Button
                 variant="outlined"
                 onClick={() => setIsEditing(false)}
                 sx={{
-                  flex: 1,
+                  flex: 1.0, // Шире!
                   borderRadius: "12px",
                   borderColor: "rgba(136, 162, 255, 0.5)",
                   color: "#88A2FF",
                   fontWeight: 600,
                   py: 1.5,
+                  minWidth: 90, 
                   "&:hover": {
                     borderColor: "#88A2FF",
                     bgcolor: "rgba(136, 162, 255, 0.05)",

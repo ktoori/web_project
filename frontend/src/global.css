@@ -93,7 +93,7 @@ button, .MuiButton-root {
 }
 
 .MuiButton-outlined:hover {
-  background: rgba(227, 252, 135, 0.1) !important;
+  background: rgba(190, 199, 159, 0.1) !important;
   border-color: var(--neon-green) !important;
   box-shadow: 0 4px 12px rgba(227, 252, 135, 0.2) !important;
 }

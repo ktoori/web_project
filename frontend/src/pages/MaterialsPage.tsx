@@ -39,7 +39,10 @@ const MaterialsPage: React.FC = () => {
   const email = localStorage.getItem("email") || "";
   const [editOpen, setEditOpen] = useState<boolean>(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
-  const [done, setDone] = useState<{ [key: string]: boolean }>({});
+  const [done, setDone] = useState<{ [key: string]: boolean }>(() => {
+    const data = localStorage.getItem("hw_done_" + email);
+    return data ? JSON.parse(data) : {};
+  });
 
   // Загружаем статус "выполнено" из localStorage
   useEffect(() => {
