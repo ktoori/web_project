@@ -1,0 +1,155 @@
+/* global.css - модернизированная версия */
+:root {
+  /* Цветовая палитра */
+  --blue-light: #88A2FF;
+  --blue-dark: #253A82;
+  --neon-green: #E3FC87;
+  --pink: #FFB2F7;
+  --blue-pale: #C0E0FF;
+  --purple: #c3b8ff;
+  --bg-primary: #FFF9F5; /* Кремовый фон */
+  --text-primary: #2D3748;
+  --text-secondary: #4A5568;
+}
+
+/* Базовые стили */
+body {
+  font-family: 'Montserrat', -apple-system, sans-serif;
+  background-color: var(--purple);
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.6;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Абстрактные линии на фоне */
+body::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -10%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 0%,
+    rgba(136, 162, 255, 0.03) 50%,
+    transparent 100%
+  );
+  transform: rotate(30deg);
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  bottom: -20%;
+  right: -10%;
+  width: 40%;
+  height: 100%;
+  background: radial-gradient(
+    circle,
+    rgba(227, 252, 135, 0.04) 0%,
+    transparent 70%
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Кнопки */
+button, .MuiButton-root {
+  font-family: inherit !important;
+  font-weight: 600 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  padding: 8px 24px !important;
+  text-transform: none !important;
+  font-size: 15px !important;
+  letter-spacing: 0.5px !important;
+}
+
+.MuiButton-contained {
+  background: var(--blue-light) !important;
+  color: white !important;
+}
+
+.MuiButton-contained:hover {
+  background: var(--blue-dark) !important;
+  box-shadow: 0 6px 16px rgba(136, 162, 255, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.MuiButton-outlined {
+  border: 2px solid var(--neon-green) !important;
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+
+.MuiButton-outlined:hover {
+  background: rgba(227, 252, 135, 0.1) !important;
+  border-color: var(--neon-green) !important;
+  box-shadow: 0 4px 12px rgba(227, 252, 135, 0.2) !important;
+}
+
+/* Карточки */
+.MuiPaper-root, .MuiAccordion-root {
+  border-radius: 24px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.MuiPaper-root:hover, .MuiAccordion-root:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Акцентные элементы */
+.accent-green {
+  background: var(--neon-green) !important;
+  color: var(--text-primary) !important;
+}
+
+.accent-pink {
+  background: var(--pink) !important;
+  color: white !important;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.MuiPaper-root {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Типографика */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Дополнительные декоративные элементы */
+.decorative-line {
+  height: 3px;
+  width: 60px;
+  background: linear-gradient(90deg, var(--blue-light), var(--pink));
+  border-radius: 3px;
+  margin: 16px 0;
+}
