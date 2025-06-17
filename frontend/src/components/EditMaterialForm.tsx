@@ -33,7 +33,15 @@ interface EditMaterialFormProps {
   onSuccess?: () => void;
 }
 
-// ...импорты и типы как раньше
+const initialErrors = {
+  subject: false,
+  lecturer: false,
+  title: false,
+  content: false,
+  date: false,
+  homework_due: false,
+  dateLogic: false
+};
 
 const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
   open,
@@ -42,51 +50,65 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
   onSuccess
 }) => {
   const [values, setValues] = useState<Material>({ ...material });
-  const [error, setError] = useState<string>("");
-  const [dateError, setDateError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({ ...initialErrors });
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     if (open) {
       setValues({ ...material });
+      setFieldErrors({ ...initialErrors });
       setError("");
-      setDateError("");
     }
   }, [material, open]);
 
-  useEffect(() => {
-    if (values.homework_due && values.date) {
-      const date = new Date(values.date);
-      const due = new Date(values.homework_due);
-      if (due < date) {
-        setDateError("Срок сдачи ДЗ не может быть раньше даты лекции");
-      } else {
-        setDateError("");
-      }
-    } else {
-      setDateError("");
-    }
-  }, [values.homework_due, values.date]);
+  // Проверка логики дат (срок сдачи ДЗ >= дата лекции)
+  const isDateLogicError = () => {
+    if (!values.date || !values.homework_due) return false;
+    return new Date(values.homework_due) < new Date(values.date);
+  };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setFieldErrors((prev) => ({
+      ...prev,
+      [e.target.name]: false,
+      dateLogic: false
+    }));
+  };
+
+  const safeSlice = (value: string | number | undefined): string => {
+    if (typeof value === "string") {
+      return value.slice(0, 10);
+    }
+    return "";
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
-    setIsSubmitting(true);
+    let errors = { ...initialErrors };
 
-    if (values.homework_due && values.date) {
-      const date = new Date(values.date);
-      const due = new Date(values.homework_due);
-      if (due < date) {
-        setDateError("Срок сдачи ДЗ не может быть раньше даты лекции");
-        setIsSubmitting(false);
-        return;
-      }
+    // Проверяем заполнение обязательных полей
+    ["subject", "lecturer", "title", "content", "date"].forEach((key) => {
+      if (!values[key as keyof Material]) errors[key as keyof typeof errors] = true;
+    });
+
+    // Проверяем логику дат
+    if (isDateLogicError()) {
+      errors.homework_due = true;
+      errors.dateLogic = true;
     }
 
+    setFieldErrors(errors);
+
+    // Если есть хоть одна ошибка, не отправляем
+    if (Object.values(errors).some(Boolean)) {
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token");
       await updateMaterial(material.id, values, token);
@@ -99,13 +121,6 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
     }
   };
 
-  const safeSlice = (value: string | number | undefined): string => {
-    if (typeof value === "string") {
-      return value.slice(0, 10);
-    }
-    return "";
-  };
-
   return (
     <Dialog
       open={open}
@@ -115,7 +130,7 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
       scroll="paper"
       PaperProps={{
         sx: {
-          mt:7,
+          mt: 7,
           borderRadius: "24px",
           background: "#FFF9F5",
           boxShadow: "0 12px 48px rgba(136, 162, 255, 0.15)",
@@ -192,59 +207,88 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
             overflowY: "auto"
           }}
         >
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} autoComplete="off">
             <Box display="flex" flexDirection="column" gap={2.5} mb={3} mt={3}>
-              {[
-                { name: "subject", label: "Предмет", required: true },
-                { name: "lecturer", label: "ФИО преподавателя", required: true },
-                { name: "title", label: "Название лекции", required: true },
-                { name: "content", label: "Текст лекции", required: true, multiline: true, rows: 4 },
-                { name: "homework", label: "Домашнее задание", multiline: true, rows: 2 },
-                { name: "date", label: "Дата лекции", type: "date", required: true },
-                { name: "homework_due", label: "Срок сдачи ДЗ", type: "date" },
-              ].map((field) => (
-                <TextField
-                  key={field.name}
-                  name={field.name}
-                  label={field.label}
-                  value={
-                    field.type === "date"
-                      ? safeSlice(values[field.name as keyof Material])
-                      : values[field.name as keyof Material] || ""
-                  }
-                  onChange={handleChange}
-                  type={field.type as any}
-                  required={field.required}
-                  multiline={field.multiline}
-                  rows={field.rows}
-                  fullWidth
-                  InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "12px",
-                      background: "#FFFFFF",
-                      fontFamily: "Montserrat, sans-serif",
-                      "& fieldset": {
-                        borderColor: "#E2E8F0",
-                        transition: "all 0.3s ease",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#88A2FF",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#88A2FF",
-                        boxShadow: "0 0 0 2px rgba(136, 162, 255, 0.2)",
-                      },
-                    },
-                  }}
-                />
-              ))}
-
-              {dateError && (
-                <Typography color="error" fontSize={14} sx={{ mt: -2, mb: 1, ml: 1 }}>
-                  {dateError}
-                </Typography>
-              )}
+              <TextField
+                name="subject"
+                label="Предмет"
+                value={values.subject}
+                onChange={handleChange}
+                fullWidth
+                error={fieldErrors.subject}
+                helperText={fieldErrors.subject ? "Заполните поле" : ""}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", background: "#fff" } }}
+              />
+              <TextField
+                name="lecturer"
+                label="ФИО преподавателя"
+                value={values.lecturer}
+                onChange={handleChange}
+                fullWidth
+                error={fieldErrors.lecturer}
+                helperText={fieldErrors.lecturer ? "Заполните поле" : ""}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", background: "#fff" } }}
+              />
+              <TextField
+                name="title"
+                label="Название лекции"
+                value={values.title}
+                onChange={handleChange}
+                fullWidth
+                error={fieldErrors.title}
+                helperText={fieldErrors.title ? "Заполните поле" : ""}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", background: "#fff" } }}
+              />
+              <TextField
+                name="content"
+                label="Текст лекции"
+                value={values.content}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                rows={4}
+                error={fieldErrors.content}
+                helperText={fieldErrors.content ? "Заполните поле" : ""}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", background: "#fff" } }}
+              />
+              <TextField
+                name="homework"
+                label="Домашнее задание"
+                value={values.homework}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                rows={2}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", background: "#fff" } }}
+              />
+              <TextField
+                name="date"
+                label="Дата лекции"
+                type="date"
+                value={values.date ? values.date.slice(0, 10) : ""}
+                onChange={handleChange}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={fieldErrors.date}
+                helperText={fieldErrors.date ? "Заполните поле" : ""}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", background: "#fff" } }}
+              />
+              <TextField
+                name="homework_due"
+                label="Срок сдачи ДЗ"
+                type="date"
+                value={values.homework_due ? values.homework_due.slice(0, 10) : ""}
+                onChange={handleChange}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={fieldErrors.homework_due}
+                helperText={
+                  fieldErrors.dateLogic
+                    ? "Срок сдачи ДЗ не может быть раньше даты лекции"
+                    : ""
+                }
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", background: "#fff" } }}
+              />
               {error && (
                 <Typography color="error" fontSize={15} fontFamily="Montserrat, sans-serif">
                   {error}
@@ -278,7 +322,7 @@ const EditMaterialForm: React.FC<EditMaterialFormProps> = ({
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={isSubmitting || !!dateError}
+                  disabled={isSubmitting}
                   sx={{
                     borderRadius: "12px",
                     px: 3,

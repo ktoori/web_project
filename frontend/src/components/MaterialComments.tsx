@@ -156,7 +156,7 @@ const MaterialComments: React.FC<MaterialCommentsProps> = ({ materialId, role })
             fullWidth
             multiline
             minRows={3}
-            required
+            
             sx={{
               mb: 2,
               "& .MuiOutlinedInput-root": {
@@ -181,22 +181,26 @@ const MaterialComments: React.FC<MaterialCommentsProps> = ({ materialId, role })
               style={{ display: "none" }}
             />
             <Tooltip title="Прикрепить файл">
-              <label htmlFor={`comment-file-${materialId}`}>
-                {/* Обёртка motion.div для анимации */}
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<AttachFileIcon />}
-                    sx={{
-                      borderRadius: "12px",
-                      borderColor: "rgba(136, 162, 255, 0.5)",
-                      color: "#88A2FF",
-                    }}
-                  >
-                    {file ? file.name : "Файл"}
-                  </Button>
-                </motion.div>
-              </label>
+              {/* motion.label вместо motion.div внутри label */}
+              <motion.label
+                htmlFor={`comment-file-${materialId}`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{ display: "block", cursor: "pointer" }}
+              >
+                <Button
+                  variant="outlined"
+                  component="span"
+                  startIcon={<AttachFileIcon />}
+                  sx={{
+                    borderRadius: "12px",
+                    borderColor: "rgba(136, 162, 255, 0.5)",
+                    color: "#88A2FF",
+                  }}
+                >
+                  {file ? file.name : "Файл"}
+                </Button>
+              </motion.label>
             </Tooltip>
 
             {/* Обёртка motion.div для кнопки отправки */}
@@ -322,7 +326,7 @@ const MaterialComments: React.FC<MaterialCommentsProps> = ({ materialId, role })
             ))}
           </AnimatePresence>
 
-          {comments.length === 0 && role !== "admin" &&(
+          {comments.length === 0 && role !== "admin" && (
             <Box
               sx={{
                 textAlign: "center",

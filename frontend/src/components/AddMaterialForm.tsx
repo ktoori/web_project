@@ -30,18 +30,67 @@ const initialValues: MaterialFormValues = {
 const AddMaterialForm: React.FC<AddMaterialFormProps> = ({ onSuccess }) => {
   const [values, setValues] = useState<MaterialFormValues>(initialValues);
   const [error, setError] = useState<string>("");
+  const [invalidFields, setInvalidFields] = useState<{ [key: string]: boolean }>({});
+  const [dateError, setDateError] = useState<string>("");
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setValues((prev) => ({ ...prev, [name]: value }));
+
+    // Сброс ошибок при изменении
+    setInvalidFields((prev) => ({ ...prev, [name]: false }));
+
+    if ((name === "date" || name === "homework_due") && values.homework_due && values.date) {
+      const date = new Date(name === "date" ? value : values.date);
+      const due = new Date(name === "homework_due" ? value : values.homework_due);
+      if (due < date) {
+        setDateError("Срок сдачи ДЗ не может быть раньше даты лекции");
+        setInvalidFields((prev) => ({ ...prev, homework_due: true }));
+      } else {
+        setDateError("");
+        setInvalidFields((prev) => ({ ...prev, homework_due: false }));
+      }
+    }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    let localInvalid: { [key: string]: boolean } = {};
+
+    // Проверка обязательных полей
+    ["subject", "lecturer", "title", "content", "date"].forEach((field) => {
+      if (!values[field as keyof MaterialFormValues]) {
+        localInvalid[field] = true;
+      }
+    });
+
+    // Проверка на дату
+    if (values.homework_due && values.date) {
+      const date = new Date(values.date);
+      const due = new Date(values.homework_due);
+      if (due < date) {
+        setDateError("Срок сдачи ДЗ не может быть раньше даты лекции");
+        localInvalid.homework_due = true;
+      } else {
+        setDateError("");
+      }
+    } else {
+      setDateError("");
+    }
+
+    setInvalidFields(localInvalid);
+
+    // Если есть некорректные поля, не отправлять форму
+    if (Object.keys(localInvalid).length > 0) {
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       await createMaterial(values, token);
       setValues(initialValues);
+      setInvalidFields({});
       onSuccess && onSuccess();
     } catch {
       setError("Ошибка при добавлении материала");
@@ -122,10 +171,12 @@ const AddMaterialForm: React.FC<AddMaterialFormProps> = ({ onSuccess }) => {
                 value={values[field.name as keyof MaterialFormValues]}
                 onChange={handleChange}
                 fullWidth
-                required={field.required}
+                // required={field.required} // НЕ ставим required, иначе будет системное уведомление
                 type={field.type as any}
                 multiline={field.multiline}
                 minRows={field.minRows}
+                error={!!invalidFields[field.name]}
+                helperText={field.name === "homework_due" && dateError ? dateError : undefined}
                 InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
                 InputProps={{
                   style: {
@@ -137,14 +188,16 @@ const AddMaterialForm: React.FC<AddMaterialFormProps> = ({ onSuccess }) => {
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     "& fieldset": {
-                      borderColor: "#E2E8F0",
+                      borderColor: !!invalidFields[field.name] ? "#E53E3E" : "#E2E8F0",
                     },
                     "&:hover fieldset": {
-                      borderColor: "#88A2FF",
+                      borderColor: !!invalidFields[field.name] ? "#E53E3E" : "#88A2FF",
                     },
                     "&.Mui-focused fieldset": {
-                      borderColor: "#88A2FF",
-                      boxShadow: "0 0 0 2px rgba(136, 162, 255, 0.2)",
+                      borderColor: !!invalidFields[field.name] ? "#E53E3E" : "#88A2FF",
+                      boxShadow: !!invalidFields[field.name]
+                        ? "0 0 0 2px rgba(229, 62, 62, 0.15)"
+                        : "0 0 0 2px rgba(136, 162, 255, 0.2)",
                     },
                   },
                 }}
