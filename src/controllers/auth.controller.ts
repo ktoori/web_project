@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../models/db';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const register = async (req: Request, res: Response) => {
   const { email, password, role } = req.body;
@@ -30,5 +33,11 @@ export const login = async (req: Request, res: Response) => {
 
   const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: '7d' });
   res.json({ token, role: user.role });
+  //
+  if (!token ) {
+    res.status(401).json({ message: 'Invalid token' });
+    return;
+  }
+  //
 
 };
