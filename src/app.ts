@@ -14,5 +14,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/materials', materialRoutes);
 
 app.use('/api/materials', commentRoutes);
-
+app.get('/', (req, res) => {
+  res.json({
+    message: "Welcome to the Educational Materials API",
+    endpoints: {
+      auth: "/api/auth",
+      materials: "/api/materials"
+    }
+  });
+});
 export default app;
